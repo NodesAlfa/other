@@ -1,0 +1,88 @@
+import telebot
+from telebot import types
+from googletrans import Translator
+
+token = "токен"
+
+source = "" # язык с которого переводим
+destination = "" # язык на который переводим
+mode = "" # режим работы (выбор первого языка и выбор второго языка)
+
+bot = telebot.TeleBot(token)
+translator = Translator()
+
+languages = ["en", "ru", "tr", "de"]
+
+@bot.message_handler(commands=["start"])
+def start(message):
+    markup = types.ReplyKeyboardMarkup()
+    item_1 = types.KeyboardButton("Choose lang 1")
+    item_2 = types.KeyboardButton("Choose lang 2")
+    markup.add(item_1, item_2)
+    bot.send_message(message.from_user.id, f"Good day, {message.from_user.last_name}", reply_markup=markup)
+
+
+@bot.message_handler(commands=["reverse"])
+def reverse_languages(message):
+    global source, destination
+    source, destination = destination, source
+    bot.send_message(message.from_user.id, "Languages have been reversed!")
+
+
+@bot.message_handler(content_types=["text"])
+def get_text_message(message):
+    global mode, source, destination
+    main_text = message.text
+    if main_text == "Choose lang 1":
+        mode = "lang_1"
+        markup = types.ReplyKeyboardMarkup()
+        item_1 = types.KeyboardButton("en")
+        item_2 = types.KeyboardButton("ru")
+        item_3 = types.KeyboardButton("tr")
+        item_4 = types.KeyboardButton("de")
+        markup.add(item_1, item_2, item_3, item_4)
+        bot.send_message(message.from_user.id, "Please, choose lang 1", reply_markup=markup)
+    elif main_text == "Choose lang 2":
+        mode = "lang_2"
+        markup = types.ReplyKeyboardMarkup()
+        item_1 = types.KeyboardButton("en")
+        item_2 = types.KeyboardButton("ru")
+        item_3 = types.KeyboardButton("tr")
+        item_4 = types.KeyboardButton("de")
+        markup.add(item_1, item_2, item_3, item_4)
+        bot.send_message(message.from_user.id, "Please, choose lang 2", reply_markup=markup)
+    elif main_text in languages and mode == "lang_1":
+        source = main_text
+        markup = types.ReplyKeyboardMarkup()
+        item_1 = types.KeyboardButton("Choose lang 1")
+        item_2 = types.KeyboardButton("Choose lang 2")
+        markup.add(item_1, item_2)
+        bot.send_message(message.from_user.id, f"Lang 1 has been chosen", reply_markup=markup)
+     
+    elif main_text in languages and mode == "lang_2":
+        destination = main_text
+        markup = types.ReplyKeyboardMarkup()
+        item_1 = types.KeyboardButton("Choose lang 1")
+        item_2 = types.KeyboardButton("Choose lang 2")
+        markup.add(item_1, item_2)
+        bot.send_message(message.from_user.id, f"Lang 2 has been chosen", reply_markup=markup)
+    else:
+        if source == "":
+            markup = types.ReplyKeyboardMarkup()
+            item_1 = types.KeyboardButton("Choose lang 1")
+            item_2 = types.KeyboardButton("Choose lang 2")
+            markup.add(item_1, item_2)
+            bot.send_message(message.from_user.id, f"Choose lang 1!", reply_markup=markup)
+        elif destination == "":
+            markup = types.ReplyKeyboardMarkup()
+            item_1 = types.KeyboardButton("Choose lang 1")
+            item_2 = types.KeyboardButton("Choose lang 2")
+            markup.add(item_1, item_2)
+            bot.send_message(message.from_user.id, f"Choose lang 2!", reply_markup=markup)
+        else:
+            translated_text = translator.translate(main_text, dest=destination, src=source)
+            bot.send_message(message.from_user.id, translated_text.text)
+
+
+bot.polling(none_stop=True, interval=0)
+
